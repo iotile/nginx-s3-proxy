@@ -1,26 +1,19 @@
 
-## Motivation
-
-This image was created for use with dogestry. We wanted a caching HTTP proxy between our
-servers and S3 so that images were only downloaded once from S3.
-
-## Usage
-
 The image assumes a config file in the container at: `/nginx.conf` so use the `-v` option to
 mount one from your host.
 
 
 ```
-docker run -p 8000:8000 -v /path/to/nginx.conf:/nginx.conf coopernurse/nginx-s3-proxy 
+docker run -p 8152:8000 -v /absolute/path/to/nginx.conf:/nginx.conf iotile/nginx-s3-proxy
 ```
 
-If you want to store the cache on the host, bind a path to `/data/cache`:
+If you want to easily view the logs on the host, bind a path to `/usr/local/nginx/logs/`:
 
 ```
-docker run -p 8000:8000 -v /path/to/nginx.conf:/nginx.conf -v /my/path:/data/cache coopernurse/nginx-s3-proxy 
+docker run -p 8152:8000 -v /absolute/path/to/nginx.conf:/nginx.conf -v /my/path:/usr/local/nginx/logs/ iotile/nginx-s3-proxy
 ```
 
-Feel free to alter the `-p` param if you wish to bind the port differently onto the host.
+(The port `8152` is the port that the Yocto config in iotile/meta-arch-systems/local.conf.sample expects)
 
 
 Example nginx.conf file:
@@ -56,7 +49,7 @@ http {
     server {
         listen     8000;
 
-        aws_access_key "YOUR_KEY_ID";
+        aws_access_key "AWS_ACCESS_KEY_ID";
         aws_signing_key "FIRST_LINE_FROM_generate_signing_key";
         aws_key_scope "SECOND_LINE_FROM_generate_signing_key";
         aws_s3_bucket arch-eng-shared;
@@ -73,8 +66,10 @@ Things you want to tweak include:
 
 
 * aws_access_key
-* aws_secret_key
-* s3_bucket
-* proxy_cache_valid - change 24h to your cache duration as desired.
+* aws_signing_key
+* aws_key_scope
+
+The signing key and scope must be generated. This container uses the plugin from the anomalizer/ngx_aws_auth repo and it includes a script to generate both. See https://github.com/anomalizer/ngx_aws_auth for more details.
+
 
 

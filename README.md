@@ -31,47 +31,39 @@ pid /run/nginx.pid;
 daemon off;
 
 events {
-	worker_connections 768;
+    worker_connections 768;
 }
 
 http {
-	sendfile on;
-	tcp_nopush on;
-	tcp_nodelay on;
-	keepalive_timeout 65;
-	types_hash_max_size 2048;
-	server_names_hash_bucket_size 64;
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+    server_names_hash_bucket_size 64;
 
-	include /usr/local/nginx/conf/mime.types;
-	default_type application/octet-stream;
+    include /usr/local/nginx/conf/mime.types;
+    default_type application/octet-stream;
 
-	access_log /usr/local/nginx/logs/access.log;
-	error_log  /usr/local/nginx/logs/error.log;
+    access_log /usr/local/nginx/logs/access.log;
+    error_log  /usr/local/nginx/logs/error.log;
 
-	gzip on;
-	gzip_disable "msie6";
-	gzip_http_version 1.1;
-	gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
-
-    proxy_cache_lock on;
-    proxy_cache_lock_timeout 60s;
-    proxy_cache_path /data/cache levels=1:2 keys_zone=s3cache:10m max_size=30g;
+    gzip on;
+    gzip_disable "msie6";
+    gzip_http_version 1.1;
+    gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
 
     server {
         listen     8000;
 
+        aws_access_key "YOUR_KEY_ID";
+        aws_signing_key "FIRST_LINE_FROM_generate_signing_key";
+        aws_key_scope "SECOND_LINE_FROM_generate_signing_key";
+        aws_s3_bucket arch-eng-shared;
+        
         location / {
-            proxy_pass https://your-bucket.s3.amazonaws.com;
-
-            aws_access_key your-access-key;
-            aws_secret_key your-secret-key;
-            s3_bucket your-bucket;
-
-            proxy_set_header Authorization $s3_auth_token;
-            proxy_set_header x-amz-date $aws_date;
-
-            proxy_cache        s3cache;
-            proxy_cache_valid  200 302  24h;
+            aws_sign;
+            proxy_pass https://arch-eng-shared.s3.amazonaws.com;
         }
     }
 }
@@ -79,10 +71,7 @@ http {
 
 Things you want to tweak include:
 
-* proxy_cache_path
-  * alter max_size as desired
-  * if you want the cache stored external to the container, alter the path
-* proxy_pass
+
 * aws_access_key
 * aws_secret_key
 * s3_bucket
